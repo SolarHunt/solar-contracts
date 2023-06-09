@@ -3,12 +3,13 @@ pragma solidity ^0.8.9;
 
 import {ICharityID} from "./interfaces/ICharityID.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title TreasureHunt Contract
  * @author SolarHunt Team @ ETHCC23 Prague Hackathon
  */
-contract TreasureHunt is AccessControl {
+contract TreasureHunt is AccessControl, ReentrancyGuard {
     // =========================== Enum ==============================
 
     /// @notice Enum Treasure Hunt
@@ -82,20 +83,22 @@ contract TreasureHunt is AccessControl {
         uint256 _charityId,
         string calldata _treasureHuntCid,
         uint256 _depositAmount,
-        string memory _secretCodeHash
-    ) public returns (uint256) {
+        bytes32 _secretCodeHash
+    ) public onlyCharityOwner(_charityId) returns (uint256) {
         charityIdContrat.isValid(_charityId);
 
         return _createTreasureHunt(Status.Opened, _charityId, _depositAmount, _treasureHuntCid, _secretCodeHash);
     }
 
     // create an update createTreasureHuntFromCharity to allow the charity to update the bounty amount
-    function updateTreasureHuntFromCharity(
+    function updateTreasureHunt(
+        uint256 _charityId,
         uint256 _treasureHuntId,
         string calldata _newTreasureHuntCid
-    ) public returns (uint256) {
+    ) public onlyCharityOwner(_charityId) returns (uint256) {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
+        require(bytes(_newTreasureHuntCid).length == 46, "Invalid cid");
 
         require(
             treasureHunts[_treasureHuntId].charityId == charityIdContrat.ids(msg.sender),
@@ -107,29 +110,42 @@ contract TreasureHunt is AccessControl {
         emit TreasureHuntDetailedUpdated(_treasureHuntId, _newTreasureHuntCid);
     }
 
-    // i want to make a function that if the user propose a secretHash that match with the secret hash of the treasure hunt then the user can claim a % of the bouty based on the amount of deposit he made and the % the charity set up in the CharityId contract
-
-    /**
-     * @notice Update handle address mapping and emit event after mint.
-     * @param _treasureHuntId the id of the TreasureHunt
-     * @param _secretCode the secret code for the TreasureHunt
-     * @return uint256 returns the id of the newly created Treasure Hunt
-     */
-    // TODO reeantranycy attack add OZ
-    function claimTreasureHunt(uint256 _treasureHuntId, string memory _secretCode) public returns (uint256) {
+    function closeTreasureHunt(uint256 _charityId, uint256 _treasureHuntId) public {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
 
         require(
-            keccak256(abi.encodePacked(_secretCode)) ==
-                keccak256(abi.encodePacked(treasureHunts[_treasureHuntId].secretCodeHash)),
-            "The secret code is not correct"
+            treasureHunts[_treasureHuntId].charityId == charityIdContrat.ids(msg.sender),
+            "You're not the owner of this TreasureHunt"
         );
 
         treasureHunts[_treasureHuntId].status = Status.Closed;
 
-        // calculate and transfer the bounty to the charity and the player
+        emit TreasureHuntClosed(_treasureHuntId);
+    }
+
+    /**
+     * @notice Update handle address mapping and emit event after mint.
+     * @param _treasureHuntId the id of the TreasureHunt
+     * @param _secretCodeHash the secret code for the TreasureHunt
+     * @return uint256 returns the id of the newly created Treasure Hunt
+     */
+
+    function claimTreasureHunt(uint256 _treasureHuntId, bytes32 _secretCodeHash) public nonReentrant returns (uint256) {
+        require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
+        require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
+
+        require(_secretCodeHash == treasureHunts[_treasureHuntId].secretCodeHash, "The secret code is not correct");
+
+        treasureHunts[_treasureHuntId].status = Status.Closed;
+
+        // calculate and transfer the bounty to the charity and the player and the contract
         uint256 totalBounty = treasureHunts[_treasureHuntId].totalTreasureHuntDeposit;
+
+        // Calculate the contract's gain (1% of the total bounty)
+        uint256 contractAmount = totalBounty / 100;
+        totalBounty -= contractAmount; // subtract contract's share from total bounty
+
         uint256 charityGain = charityIdContrat.charities(treasureHunts[_treasureHuntId].charityId).charityGain;
         uint256 charityAmount = (totalBounty * charityGain) / 100;
         uint256 playerAmount = totalBounty - charityAmount;
@@ -156,19 +172,18 @@ contract TreasureHunt is AccessControl {
      * @param _charityId The id of the associated charity
      * @param _depositAmount The amount of the deposit for the TreasureHunt
      * @param _treasureHuntCid The IPFS content identifier for the TreasureHunt
-     * @param _secretCode The hashed version of the secret code for the TreasureHunt
+     * @param secretCodeHash The hashed version of the secret code for the TreasureHunt
      * @return uint256 The id of the newly created TreasureHunt
      */
-    // TODO need to hash the secret code in the front end all tyhe secret here are bytes32
+
     function _createTreasureHunt(
         Status _status,
         uint256 _charityId,
         uint256 _depositAmount,
         string calldata _treasureHuntCid,
-        string memory _secretCode
+        bytes32 secretCodeHash
     ) private returns (uint256) {
-        // TODO check the length of the cid 42 or 46
-        require(bytes(_treasureHuntCid).length > 0, "Should provide a valid IPFS URI");
+        require(bytes(_treasureHuntCid).length == 46, "Invalid cid");
 
         uint256 id = nextTreasureHuntId;
         nextTreasureHuntId++;
@@ -178,22 +193,12 @@ contract TreasureHunt is AccessControl {
         treasureHunt.charityId = _charityId;
         treasureHunt.depositAmount = _depositAmount;
         treasureHunt.cid = _treasureHuntCid;
-        treasureHunt.secretCodeHash = keccak256(abi.encodePacked(_secretCode));
+        treasureHunt.secretCodeHash = secretCodeHash;
 
-        //TODO : do i need to pass the status in the event
-        emit treasureHuntCreated(
-            Status.Opened,
-            id,
-            _charityId,
-            _depositAmount,
-            _treasureHuntCid,
-            treasureHunt.secretCodeHash
-        );
+        emit treasureHuntCreated(Status.Opened, id, _charityId, _depositAmount, _treasureHuntCid, secretCodeHash);
 
         return id;
     }
-
-    // TODO : add a close TH button the a claim back button for player
 
     // =========================== Player function ==============================
 
@@ -207,9 +212,10 @@ contract TreasureHunt is AccessControl {
     function depositAmountToParticipate(uint256 _treasureHuntId) public payable {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
-        require(msg.value == treasureHunts[_treasureHuntId].depositAmount, "Incorrect deposit amount");
 
-        //TODO make possible to deposit whatever amount you want
+        // require(msg.value == treasureHunts[_treasureHuntId].depositAmount, "Incorrect deposit amount"); DEPRECATED
+        // we don't want limited the amount of the donation
+
         // Add the deposit to the total bounty amount
         treasureHunts[_treasureHuntId].totalTreasureHuntDeposit += msg.value;
 
@@ -222,14 +228,23 @@ contract TreasureHunt is AccessControl {
         revert("Please use the depositBountyAmount function to deposit ethers");
     }
 
-    // TODO add the 1% of the total bounty to the charity
-
     /**
      * Withdraws the contract balance to the admin.
      */
     function withdraw(address _solarFundAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         (bool sent, ) = payable(_solarFundAddress).call{value: address(this).balance}("");
         require(sent, "Failed to withdraw");
+    }
+
+    // =========================== Modifiers ==============================
+
+    /**
+     * @notice Check if msg sender is the owner of a platform
+     * @param _charityId The ID of the Charity
+     */
+    modifier onlyCharityOwner(uint256 _charityId) {
+        require(charityIdContrat.ownerOf(_charityId) == msg.sender, "Not the owner");
+        _;
     }
 
     // =========================== Events ==============================
@@ -257,4 +272,6 @@ contract TreasureHunt is AccessControl {
     event TreasureHuntDetailedUpdated(uint256 indexed treasureHuntId, string newTreasureHuntCid);
 
     event TreasureHuntClaimed(uint256 indexed treasureHuntId, address indexed player);
+
+    event TreasureHuntClosed(uint256 indexed treasureHuntId);
 }
