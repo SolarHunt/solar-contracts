@@ -1,21 +1,17 @@
 {
-  "name": "talentlayer-id-contracts",
+  "name": "solar-fund",
   "version": "1.0.0",
-  "description": "TalentLayer ID Contracts",
+  "description": "solar-fund smart contracts",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "solhint": "solhint contracts/kleros/*.sol"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TalentLayer/talentlayer-id-contracts.git"
+    "url": "git+https://github.com/SolarHunt"
   },
-  "author": "",
+  "author": "SolarHunt",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/TalentLayer/talentlayer-id-contracts/issues"
-  },
   "homepage": "https://github.com/TalentLayer/talentlayer-id-contracts#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.2",

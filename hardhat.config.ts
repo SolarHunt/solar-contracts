@@ -71,6 +71,7 @@ const config: HardhatUserConfig = {
       kovan: process.env.ETHERSCAN_API_KEY || '',
       sepolia: process.env.ETHERSCAN_API_KEY || '',
       mantle: process.env.MANTLE_API_KEY || '',
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY || '',
     },
   },
   gasReporter: {
