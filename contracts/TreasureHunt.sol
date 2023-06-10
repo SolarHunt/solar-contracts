@@ -138,8 +138,6 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
 
         require(_secretCodeHash == treasureHunts[_treasureHuntId].secretCodeHash, "The secret code is not correct");
 
-        treasureHunts[_treasureHuntId].status = Status.Closed;
-
         // calculate and transfer the bounty to the charity and the player and the contract
         uint256 totalBounty = treasureHunts[_treasureHuntId].totalTreasureHuntDeposit;
 
@@ -161,6 +159,8 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
 
         // Reset the totalTreasureHuntDeposit to 0 as the funds have been distributed
         treasureHunts[_treasureHuntId].totalTreasureHuntDeposit = 0;
+
+        treasureHunts[_treasureHuntId].status = Status.Closed;
 
         emit TreasureHuntClaimed(_treasureHuntId, msg.sender);
     }
