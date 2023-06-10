@@ -225,6 +225,8 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         treasureHuntPlayerDeposit[_treasureHuntId][msg.sender] += msg.value;
 
         treasureHunts[_treasureHuntId].numParticipants++;
+
+        emit DepositToParticipateDone(msg.sender, msg.value, _treasureHuntId);
     }
 
     // Fallback function to prevent from sending ether to the contract
@@ -269,9 +271,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         bytes32 secretCodeHash
     );
 
-    ///Emit when Cid is updated for a Service
-    ///@param treasureHuntId The service ID
-    ///@param newTreasureHuntCid The new IPFS CID for the TreasureHunt
+    event DepositToParticipateDone(address playerAddress, uint256 amountDeposit, uint256 treasureHuntId);
 
     event TreasureHuntDetailedUpdated(uint256 indexed treasureHuntId, string newTreasureHuntCid);
 
