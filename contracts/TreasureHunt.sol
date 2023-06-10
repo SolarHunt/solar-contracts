@@ -125,18 +125,35 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         emit TreasureHuntClosed(_treasureHuntId);
     }
 
+    // make a function that will check if the player git the right code
+
+    function checkIfWin(uint256 _treasureHuntId, bytes32 _secretCodeHash) public view returns (bool) {
+        require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
+        require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
+        require(_secretCodeHash == treasureHunts[_treasureHuntId].secretCodeHash, "The secret code is not correct");
+
+        return true;
+    }
+
     /**
      * @notice Update handle address mapping and emit event after mint.
      * @param _treasureHuntId the id of the TreasureHunt
      * @param _secretCodeHash the secret code for the TreasureHunt
+    * @param _amountPlayerGive the amount the player is giving to the TreasureHunt
 
      */
 
-    function claimTreasureHunt(uint256 _treasureHuntId, bytes32 _secretCodeHash) public nonReentrant {
+    function customClaimTreasureHunt(
+        uint256 _treasureHuntId,
+        bytes32 _secretCodeHash,
+        uint256 _amountPlayerGive
+    ) public nonReentrant {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
-
-        require(_secretCodeHash == treasureHunts[_treasureHuntId].secretCodeHash, "The secret code is not correct");
+        require(
+            checkIfWin(_treasureHuntId, _secretCodeHash),
+            "The secret code is not correct or the treasure hunt is not opened or doesn't exist"
+        );
 
         // calculate and transfer the bounty to the charity and the player and the contract
         uint256 totalBounty = treasureHunts[_treasureHuntId].totalTreasureHuntDeposit;
@@ -150,6 +167,12 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         uint256 charityGain = 70;
         uint256 charityAmount = (totalBounty * charityGain) / 100;
         uint256 playerAmount = totalBounty - charityAmount;
+
+        require(_amountPlayerGive <= playerAmount, "Player does not have this amount to give");
+
+        // TODO bad math here
+        playerAmount -= _amountPlayerGive;
+        charityAmount += _amountPlayerGive;
 
         (bool charitySent, ) = payable(charityIdContrat.ownerOf(treasureHunts[_treasureHuntId].charityId)).call{
             value: charityAmount

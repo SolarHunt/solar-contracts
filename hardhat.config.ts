@@ -34,7 +34,7 @@ function getChainConfig(chain: Network): NetworkUserConfig {
       jsonRpcUrl = 'https://rpc.ankr.com/gnosis'
       break
     case Network.GOERLI:
-      jsonRpcUrl = 'https://goerli.infura.io/v3/' + infuraApiKey
+      jsonRpcUrl = 'https://rpc.eu-central-2.gateway.fm/v4/gnosis/non-archival/mainnet'
       break
     case Network.KOVAN:
       jsonRpcUrl = 'https://kovan.infura.io/v3/' + infuraApiKey
@@ -43,7 +43,7 @@ function getChainConfig(chain: Network): NetworkUserConfig {
       jsonRpcUrl = 'https://polygon-mumbai.infura.io/v3/' + infuraApiKey
       break
     case Network.MANTLETESTNET:
-      jsonRpcUrl = 'https://rpc.mantle.xyz'
+      jsonRpcUrl = 'https://rpc.testnet.mantle.xyz/'
       // https://rpc.mantle.xyz
       break
     default:
@@ -70,7 +70,7 @@ const config: HardhatUserConfig = {
       goerli: process.env.ETHERSCAN_API_KEY || '',
       kovan: process.env.ETHERSCAN_API_KEY || '',
       sepolia: process.env.ETHERSCAN_API_KEY || '',
-      mantle: process.env.MANTLE_API_KEY || '',
+      mantletestnet: process.env.MANTLE_API_KEY || '',
       polygonMumbai: process.env.POLYGONSCAN_API_KEY || '',
     },
   },
@@ -99,6 +99,7 @@ const config: HardhatUserConfig = {
     kovan: getChainConfig(Network.KOVAN),
     sepolia: getChainConfig(Network.SEPOLIA),
     mumbai: getChainConfig(Network.MUMBAI),
+    mantletestnet: getChainConfig(Network.MANTLETESTNET),
   },
   paths: {
     artifacts: './artifacts',

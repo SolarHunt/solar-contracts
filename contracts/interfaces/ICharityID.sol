@@ -29,11 +29,11 @@ interface ICharityID {
 
     function supportsInterface(bytes4 interfaceId) external view returns (bool);
 
+    function transferFrom(address from, address to, uint256 tokenId) external;
+
+    function safeTransferFrom(address from, address to, uint256 tokenId) external;
+
     function tokenURI(uint256 tokenId) external view returns (string memory);
 
     function ownerOf(uint256 tokenId) external view returns (address);
-
-    event CidUpdated(uint256 indexed _tokenId, string _newCid);
-    event CharityGainUpdated(uint256 _charityId, uint256 _charityGain);
-    event Mint(address indexed _charityAddress, uint256 charityId, string _charityName);
 }

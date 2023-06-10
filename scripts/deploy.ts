@@ -20,21 +20,21 @@ task('deploy')
       await run('compile')
 
       // // Deploy CharityID contract
-      // const CharityId = await ethers.getContractFactory('CharityID')
-      // const charityId = await CharityId.deploy()
-      // if (verify) {
-      //   await charityId.deployTransaction.wait(5)
-      //   await run('verify:verify', {
-      //     address: charityId.address,
-      //   })
-      // }
-      // console.log('CharityID address:', charityId.address)
+      const CharityId = await ethers.getContractFactory('CharityID')
+      const charityId = await CharityId.deploy()
+      if (verify) {
+        await charityId.deployTransaction.wait(5)
+        await run('verify:verify', {
+          address: charityId.address,
+        })
+      }
+      console.log('CharityID address:', charityId.address)
 
-      // set(network.name as any as Network, ConfigProperty.CharityId, charityId.address)
+      set(network.name as any as Network, ConfigProperty.CharityId, charityId.address)
 
       //Deploy Treasure hunt Contract
       const TreasureHunt = await ethers.getContractFactory('TreasureHunt')
-      const treasureHuntArgs: [string] = ['0xf8c813e0ee9A4ab70418CD57Dcf1aC2162E2d0fD']
+      const treasureHuntArgs: [string] = [charityId.address]
       const treasureHunt = await TreasureHunt.deploy(...treasureHuntArgs)
       if (verify) {
         await treasureHunt.deployTransaction.wait(5)
