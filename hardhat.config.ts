@@ -7,6 +7,7 @@ import 'hardhat-contract-sizer'
 import './scripts/deploy'
 import './scripts/wallet'
 import { Network } from './scripts/config'
+import { get } from 'http'
 
 dotenvConfig({ path: resolve(__dirname, './.env') })
 
@@ -26,6 +27,9 @@ function getChainConfig(chain: Network): NetworkUserConfig {
     case Network.MAINNET:
       jsonRpcUrl = 'https://mainnet.infura.io/v3/' + infuraApiKey
       break
+    case Network.SEPOLIA:
+      jsonRpcUrl = 'https://sepolia.infura.io/v3/' + infuraApiKey
+      break
     case Network.GNOSIS:
       jsonRpcUrl = 'https://rpc.ankr.com/gnosis'
       break
@@ -34,6 +38,13 @@ function getChainConfig(chain: Network): NetworkUserConfig {
       break
     case Network.KOVAN:
       jsonRpcUrl = 'https://kovan.infura.io/v3/' + infuraApiKey
+      break
+    case Network.MUMBAI:
+      jsonRpcUrl = 'https://polygon-mumbai.infura.io/v3/' + infuraApiKey
+      break
+    case Network.MANTLETESTNET:
+      jsonRpcUrl = 'https://rpc.mantle.xyz'
+      // https://rpc.mantle.xyz
       break
     default:
       jsonRpcUrl = 'https://mainnet.infura.io/v3/' + infuraApiKey
@@ -58,6 +69,8 @@ const config: HardhatUserConfig = {
       xdai: process.env.GNOSIS_API_KEY || '',
       goerli: process.env.ETHERSCAN_API_KEY || '',
       kovan: process.env.ETHERSCAN_API_KEY || '',
+      sepolia: process.env.ETHERSCAN_API_KEY || '',
+      mantle: process.env.MANTLE_API_KEY || '',
     },
   },
   gasReporter: {
@@ -83,6 +96,8 @@ const config: HardhatUserConfig = {
     goerli: getChainConfig(Network.GOERLI),
     gnosis: getChainConfig(Network.GNOSIS),
     kovan: getChainConfig(Network.KOVAN),
+    sepolia: getChainConfig(Network.SEPOLIA),
+    mumbai: getChainConfig(Network.MUMBAI),
   },
   paths: {
     artifacts: './artifacts',

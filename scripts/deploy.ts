@@ -3,13 +3,12 @@ import { task } from 'hardhat/config'
 import { getConfig, Network, NetworkConfig } from './config'
 import { set, ConfigProperty } from '../configManager'
 
-// npx hardhat deploy --use-pohmock --use-test-erc20  --verify --network goerli
+// npx hardhat deploy --verify --network goerli
 task('deploy')
   .addFlag('verify', 'verify contracts on etherscan')
   .setAction(async (args, { ethers, run, network }) => {
     try {
-      const { verify, usePohmock, useTestErc20 } = args
-      const [alice, bob, carol, dave] = await ethers.getSigners()
+      const { verify } = args
       const chainId = network.config.chainId ? network.config.chainId : Network.LOCAL
       const networkConfig: NetworkConfig = getConfig(chainId)
 
@@ -17,10 +16,6 @@ task('deploy')
       console.log(network.name)
       console.log('Task Args')
       console.log(args)
-
-      console.log('Signer')
-      console.log('  at', alice.address)
-      console.log('  ETH', formatEther(await alice.getBalance()))
 
       await run('compile')
 
