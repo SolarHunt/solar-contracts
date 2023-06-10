@@ -39,7 +39,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
     }
 
     /// @notice incremental service Id
-    uint256 public nextTreasureHuntId = 1;
+    uint256 public nextTreasureHuntId = 0;
 
     /// Charity  ID contarct instance
     ICharityID public charityIdContrat;
@@ -129,10 +129,10 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
      * @notice Update handle address mapping and emit event after mint.
      * @param _treasureHuntId the id of the TreasureHunt
      * @param _secretCodeHash the secret code for the TreasureHunt
-     * @return uint256 returns the id of the newly created Treasure Hunt
+
      */
 
-    function claimTreasureHunt(uint256 _treasureHuntId, bytes32 _secretCodeHash) public nonReentrant returns (uint256) {
+    function claimTreasureHunt(uint256 _treasureHuntId, bytes32 _secretCodeHash) public nonReentrant {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
 
@@ -145,7 +145,9 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         uint256 contractAmount = totalBounty / 100;
         totalBounty -= contractAmount; // subtract contract's share from total bounty
 
-        uint256 charityGain = charityIdContrat.charities(treasureHunts[_treasureHuntId].charityId).charityGain;
+        // uint256 charityGain = charityIdContrat.charities(treasureHunts[_treasureHuntId].charityId).charityGain;
+        // TODO fix the Chaity gain contract call
+        uint256 charityGain = 70;
         uint256 charityAmount = (totalBounty * charityGain) / 100;
         uint256 playerAmount = totalBounty - charityAmount;
 
