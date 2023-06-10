@@ -35,6 +35,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         string cid;
         uint256 totalTreasureHuntDeposit;
         bytes32 secretCodeHash;
+        uint256 numParticipants;
     }
 
     /// @notice incremental service Id
@@ -212,6 +213,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
     function depositAmountToParticipate(uint256 _treasureHuntId) public payable {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
+        require(msg.value > 0, "You must deposit more than 0");
 
         // require(msg.value == treasureHunts[_treasureHuntId].depositAmount, "Incorrect deposit amount"); DEPRECATED
         // we don't want limited the amount of the donation
@@ -221,6 +223,8 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
 
         // Keep track of the player's deposit for this treasure hunt
         treasureHuntPlayerDeposit[_treasureHuntId][msg.sender] += msg.value;
+
+        treasureHunts[_treasureHuntId].numParticipants++;
     }
 
     // Fallback function to prevent from sending ether to the contract
