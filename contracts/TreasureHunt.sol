@@ -80,7 +80,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
      * @param _secretCodeHash Hashed version of the secret code for this TreasureHunt
      * @return uint256 returns the id of the newly created Treasure Hunt
      */
-    function createTreasureHuntFromCharity(
+    function createTreasureHunt(
         uint256 _charityId,
         string calldata _treasureHuntCid,
         uint256 _depositAmount,
@@ -91,7 +91,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         return _createTreasureHunt(Status.Opened, _charityId, _depositAmount, _treasureHuntCid, _secretCodeHash);
     }
 
-    // create an update createTreasureHuntFromCharity to allow the charity to update the bounty amount
+    // update createTreasureHuntFromCharity to allow the charity to update the bounty amount
     function updateTreasureHunt(
         uint256 _charityId,
         uint256 _treasureHuntId,
@@ -111,7 +111,7 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         emit TreasureHuntDetailedUpdated(_treasureHuntId, _newTreasureHuntCid);
     }
 
-    function closeTreasureHunt(uint256 _charityId, uint256 _treasureHuntId) public {
+    function closeTreasureHunt(uint256 _charityId, uint256 _treasureHuntId) public onlyCharityOwner(_charityId) {
         require(_treasureHuntId < nextTreasureHuntId, "This Treasure hunt doesn't exist");
         require(treasureHunts[_treasureHuntId].status == Status.Opened, "This Treasure hunt is not opened");
 
@@ -240,6 +240,8 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
     function withdraw(address _solarFundAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         (bool sent, ) = payable(_solarFundAddress).call{value: address(this).balance}("");
         require(sent, "Failed to withdraw");
+
+        emit WithdrawDone(_solarFundAddress, address(this).balance);
     }
 
     // =========================== Modifiers ==============================
@@ -271,11 +273,28 @@ contract TreasureHunt is AccessControl, ReentrancyGuard {
         bytes32 secretCodeHash
     );
 
-    event DepositToParticipateDone(address playerAddress, uint256 amountDeposit, uint256 treasureHuntId);
+    /// @notice Emitted when a player makes a deposit to participate in a treasure hunt
+    /// @param playerAddress The address of the player
+    /// @param amountDeposit The amount deposited by the player
+    /// @param treasureHuntId The ID of the treasure hunt
+    event DepositToParticipateDone(address indexed playerAddress, uint256 amountDeposit, uint256 treasureHuntId);
 
+    /// @notice Emitted when the details of a treasure hunt are updated
+    /// @param treasureHuntId The ID of the treasure hunt
+    /// @param newTreasureHuntCid The new content identifier (CID) of the treasure hunt
     event TreasureHuntDetailedUpdated(uint256 indexed treasureHuntId, string newTreasureHuntCid);
 
+    /// @notice Emitted when a treasure hunt is claimed by a player
+    /// @param treasureHuntId The ID of the treasure hunt
+    /// @param player The address of the player who claimed the treasure hunt
     event TreasureHuntClaimed(uint256 indexed treasureHuntId, address indexed player);
 
+    /// @notice Emitted when a treasure hunt is closed
+    /// @param treasureHuntId The ID of the treasure hunt
     event TreasureHuntClosed(uint256 indexed treasureHuntId);
+
+    /// @notice Emitted when an amount is withdrawn from the solar fund
+    /// @param solarFundAddress The address of the solar fund
+    /// @param amountWithdrawn The amount withdrawn from the solar fund
+    event WithdrawDone(address indexed solarFundAddress, uint256 amountWithdrawn);
 }

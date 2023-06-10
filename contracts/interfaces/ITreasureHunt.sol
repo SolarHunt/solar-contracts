@@ -41,7 +41,7 @@ interface ITreasureHunt {
     function getTreasureHunt(uint256 _treasureHuntId) external view returns (TreasureHunt memory);
 
     // =========================== User functions ==============================
-    function createTreasureHuntFromCharity(
+    function createTreasureHunt(
         uint256 _charityId,
         string calldata _treasureHuntCid,
         uint256 _depositAmount,
